@@ -1,0 +1,13 @@
+.build/
+.swiftpm/
+dist/
+
+.DS_Store
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# Artefatos locais de geração do ícone.
+Resources/icon-work/
+Resources/AppIcon.iconset/
+Resources/AppIcon-1024.png
