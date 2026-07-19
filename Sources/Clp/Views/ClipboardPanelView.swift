@@ -15,8 +15,7 @@ struct ClipboardPanelView: View {
   @State private var selectedBoard: Board?
   @State private var query = ""
   @State private var searchIsFocused = false
-  @State private var focusedIndex = 0
-  @State private var scrolledItemID: ClipItem.ID?
+  @State private var navigation = ClipNavigationState()
 
   @State private var renamingItem: ClipItem?
   @State private var renameText = ""
@@ -216,7 +215,10 @@ struct ClipboardPanelView: View {
             item: item,
             boards: boards,
             shortcutNumber: index < 9 ? index + 1 : nil,
-            isFocused: index == focusedIndex,
+            isFocused: navigation.isHighlighted(
+              index: index,
+              itemID: item.id
+            ),
             isCompact: isCompact,
             isRenaming: renamingItem?.id == item.id,
             renameText: $renameText,
@@ -249,23 +251,27 @@ struct ClipboardPanelView: View {
           )
           .id(item.id)
           .onHover { isHovering in
-            if isHovering {
-              focusedIndex = index
-            }
+            _ = navigation.updateHover(
+              itemID: item.id,
+              isHovering: isHovering
+            )
           }
         }
       }
       .scrollTargetLayout()
       .padding(.horizontal, 2)
       .padding(.vertical, 6)
-    }
-    .scrollPosition(id: $scrolledItemID, anchor: .center)
-    .onChange(of: focusedIndex) { _, index in
-      guard filteredItems.indices.contains(index) else { return }
-      withAnimation(.easeOut(duration: 0.18)) {
-        scrolledItemID = filteredItems[index].id
+      .contentShape(Rectangle())
+      .background {
+        // `contentShape` sozinho não cria um alvo de evento nos gaps no macOS.
+        // A opacidade mínima força uma superfície real, visualmente imperceptível.
+        Rectangle()
+          .fill(Color.black.opacity(0.001))
+          .contentShape(Rectangle())
+          .onTapGesture {}
       }
     }
+    .scrollPosition(id: $navigation.scrollTargetID, anchor: .center)
   }
 
   private var emptyState: some View {
@@ -298,8 +304,7 @@ struct ClipboardPanelView: View {
 
   private func resetForPresentation() {
     query = ""
-    focusedIndex = 0
-    scrolledItemID = nil
+    navigation.resetForPresentation()
     renamingItem = nil
     renameText = ""
     isInlineEditorFocused = false
@@ -309,25 +314,21 @@ struct ClipboardPanelView: View {
   }
 
   private func resetResultSelection() {
-    focusedIndex = 0
-    scrolledItemID = filteredItems.first?.id
+    navigation.resetSelection(itemIDs: filteredItems.map(\.id))
   }
 
   private func clampResultSelection() {
-    guard !filteredItems.isEmpty else {
-      focusedIndex = 0
-      scrolledItemID = nil
-      return
-    }
-
-    focusedIndex = min(focusedIndex, filteredItems.count - 1)
-    scrolledItemID = filteredItems[focusedIndex].id
+    navigation.clampSelection(itemIDs: filteredItems.map(\.id))
   }
 
   private func enterResults() {
     guard !filteredItems.isEmpty else { return }
     searchIsFocused = false
-    focusedIndex = min(focusedIndex, filteredItems.count - 1)
+    navigation.focusedIndex = min(
+      navigation.focusedIndex,
+      filteredItems.count - 1
+    )
+    navigation.clearHover()
 
     DispatchQueue.main.async {
       resultsHaveKeyboardFocus = true
@@ -352,11 +353,16 @@ struct ClipboardPanelView: View {
 
     let nextIndex = max(
       0,
-      min(filteredItems.count - 1, focusedIndex + delta)
+      min(filteredItems.count - 1, navigation.focusedIndex + delta)
     )
-    guard nextIndex != focusedIndex else { return .handled }
+    guard nextIndex != navigation.focusedIndex else { return .handled }
 
-    focusedIndex = nextIndex
+    withAnimation(.easeOut(duration: 0.18)) {
+      _ = navigation.moveFocus(
+        by: delta,
+        itemIDs: filteredItems.map(\.id)
+      )
+    }
     return .handled
   }
 
@@ -366,10 +372,10 @@ struct ClipboardPanelView: View {
     guard (allowSearchFocus || resultsHaveKeyboardFocus),
       !isInlineEditorFocused,
       !(searchIsFocused && !allowSearchFocus),
-      filteredItems.indices.contains(focusedIndex)
+      filteredItems.indices.contains(navigation.focusedIndex)
     else { return .ignored }
 
-    onSelect(filteredItems[focusedIndex])
+    onSelect(filteredItems[navigation.focusedIndex])
     return .handled
   }
 
@@ -408,6 +414,7 @@ struct ClipboardPanelView: View {
   private func startRenaming(_ item: ClipItem) {
     renamingItem = item
     renameText = item.title ?? ""
+    navigation.clearHover()
     searchIsFocused = false
     resultsHaveKeyboardFocus = false
 
