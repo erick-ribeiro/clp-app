@@ -89,8 +89,18 @@ codesign --verify --deep --strict dist/Clp.app
 ```
 
 O `build-app.sh` gera o bundle, valida o `Info.plist` e aplica assinatura ad-hoc
-para desenvolvimento local. Distribuição pública e notarização não fazem parte
-desta versão.
+para desenvolvimento local.
+
+### DMG (v0)
+
+```bash
+./build-dmg.sh
+```
+
+Gera `dist/Clp-0.1.0.dmg` (versão lida do `Info.plist`) com fundo customizado,
+atalho para Applications e layout de instalação. A assinatura continua ad-hoc,
+sem notarização: na primeira abertura o macOS pode pedir **Abrir mesmo assim**
+em Ajustes → Privacidade e Segurança.
 
 ## Contribuindo
 
