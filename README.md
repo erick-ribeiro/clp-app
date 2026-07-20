@@ -1,5 +1,7 @@
 # Clp
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Clp é um gerenciador de área de transferência nativo para macOS 26. Ele roda
 como app de barra de menus, sem ícone no Dock, e mantém o histórico somente no
 Mac.
@@ -50,9 +52,8 @@ fica colado à borda inferior e arredonda somente os cantos superiores. O shelf
 usa cards fixos e uma pilha horizontal lazy para continuar fluido com históricos
 grandes.
 
-O item da barra de menus usa um símbolo nativo do macOS. Se um
-`Resources/AppIcon.icns` for adicionado futuramente, `build-app.sh` o incluirá
-automaticamente no bundle.
+O item da barra de menus usa um símbolo nativo do macOS. O bundle inclui
+`Resources/AppIcon.icns` via `build-app.sh` quando o arquivo está presente.
 
 Imagens são reduzidas com ImageIO antes de aparecerem nos cards. Thumbnails e
 ícones de aplicativos ficam em caches limitados.
@@ -90,3 +91,14 @@ codesign --verify --deep --strict dist/Clp.app
 O `build-app.sh` gera o bundle, valida o `Info.plist` e aplica assinatura ad-hoc
 para desenvolvimento local. Distribuição pública e notarização não fazem parte
 desta versão.
+
+## Contribuindo
+
+1. Faça um fork do repositório e crie uma branch a partir de `master`.
+2. Implemente a mudança com commits claros.
+3. Rode `swift test -Xswiftc -warnings-as-errors`.
+4. Abra um pull request descrevendo o problema e a solução.
+
+## Licença
+
+Distribuído sob a licença [MIT](LICENSE).

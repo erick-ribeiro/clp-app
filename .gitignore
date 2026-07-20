@@ -8,6 +8,7 @@ dist/
 xcuserdata/
 
 # Artefatos locais de geração do ícone.
+# Resources/AppIcon.icns permanece versionado (asset do bundle).
 Resources/icon-work/
 Resources/AppIcon.iconset/
 Resources/AppIcon-1024.png
